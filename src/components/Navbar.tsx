@@ -1,16 +1,39 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { Menu, X, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-const navLinks = [
-  { label: "Home", to: "/" },
-  { label: "Content", to: "/content" },
-  { label: "Login", to: "/login" },
-];
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
+  const location = useLocation();
+
+  const getNavLinks = () => {
+    if (!isAuthenticated) {
+      return [
+        { label: "Home", to: "/" },
+        { label: "Login", to: "/login" },
+      ];
+    }
+    if (user?.role === "admin") {
+      return [
+        { label: "Home", to: "/" },
+        { label: "Dashboard", to: "/admin/dashboard" },
+        { label: "Content", to: "/admin/content" },
+        { label: "Students", to: "/admin/students" },
+      ];
+    }
+    return [
+      { label: "Home", to: "/" },
+      { label: "Dashboard", to: "/student/dashboard" },
+      { label: "Content", to: "/student/content" },
+      { label: "My Progress", to: "/student/my-dashboard" },
+    ];
+  };
+
+  const navLinks = getNavLinks();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -19,21 +42,27 @@ const Navbar = () => {
           Coaching Institute
         </Link>
 
-        {/* Desktop links */}
-        <ul className="hidden md:flex items-center gap-1">
+        <div className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => (
-            <li key={link.label}>
-              <Link
-                to={link.to}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                {link.label}
-              </Link>
-            </li>
+            <Link
+              key={link.label}
+              to={link.to}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                location.pathname === link.to
+                  ? "text-primary bg-primary/10"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              {link.label}
+            </Link>
           ))}
-        </ul>
+          {isAuthenticated && (
+            <Button variant="ghost" size="sm" onClick={() => { logout(); window.location.href = "/"; }} className="ml-2 text-muted-foreground">
+              <LogOut size={16} /> Logout
+            </Button>
+          )}
+        </div>
 
-        {/* Mobile toggle */}
         <button
           onClick={() => setOpen(!open)}
           className="md:hidden p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
@@ -43,7 +72,6 @@ const Navbar = () => {
         </button>
       </div>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -59,12 +87,26 @@ const Navbar = () => {
                   <Link
                     to={link.to}
                     onClick={() => setOpen(false)}
-                    className="block px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                    className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                      location.pathname === link.to
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    }`}
                   >
                     {link.label}
                   </Link>
                 </li>
               ))}
+              {isAuthenticated && (
+                <li>
+                  <button
+                    onClick={() => { setOpen(false); logout(); window.location.href = "/"; }}
+                    className="block w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-muted transition-colors"
+                  >
+                    Logout
+                  </button>
+                </li>
+              )}
             </ul>
           </motion.div>
         )}
