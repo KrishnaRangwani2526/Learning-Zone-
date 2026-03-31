@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BookOpen, LayoutDashboard, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background">
@@ -19,7 +20,7 @@ const AdminDashboard = () => {
               <h1 className="text-3xl font-display text-foreground">Admin Panel</h1>
               <p className="text-muted-foreground mt-1">Welcome, {user?.name || "Admin"}</p>
             </div>
-            <Button variant="outline" onClick={() => { logout(); window.location.href = "/"; }}>
+            <Button variant="outline" onClick={async () => { await logout(); navigate("/"); }}>
               <LogOut size={16} /> Logout
             </Button>
           </div>

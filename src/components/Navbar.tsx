@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, loading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const getNavLinks = () => {
     if (!isAuthenticated) {
@@ -31,6 +32,11 @@ const Navbar = () => {
       { label: "Content", to: "/student/content" },
       { label: "My Progress", to: "/student/my-dashboard" },
     ];
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/");
   };
 
   const navLinks = getNavLinks();
@@ -57,7 +63,7 @@ const Navbar = () => {
             </Link>
           ))}
           {isAuthenticated && (
-            <Button variant="ghost" size="sm" onClick={() => { logout(); window.location.href = "/"; }} className="ml-2 text-muted-foreground">
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="ml-2 text-muted-foreground">
               <LogOut size={16} /> Logout
             </Button>
           )}
@@ -100,7 +106,7 @@ const Navbar = () => {
               {isAuthenticated && (
                 <li>
                   <button
-                    onClick={() => { setOpen(false); logout(); window.location.href = "/"; }}
+                    onClick={() => { setOpen(false); handleLogout(); }}
                     className="block w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-muted transition-colors"
                   >
                     Logout
