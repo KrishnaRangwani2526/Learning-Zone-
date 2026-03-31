@@ -1,13 +1,14 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BookOpen, LayoutDashboard, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
 
 const StudentDashboard = () => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-background">
@@ -19,7 +20,7 @@ const StudentDashboard = () => {
               <h1 className="text-3xl font-display text-foreground">Welcome, {user?.name || "Student"}</h1>
               <p className="text-muted-foreground mt-1">What would you like to do today?</p>
             </div>
-            <Button variant="outline" onClick={() => { logout(); window.location.href = "/"; }}>
+            <Button variant="outline" onClick={async () => { await logout(); navigate("/"); }}>
               <LogOut size={16} /> Logout
             </Button>
           </div>
