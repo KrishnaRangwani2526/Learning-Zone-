@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, UserPlus, Save, Users, Trash2, Plus } from "lucide-react";
+import { ArrowLeft, UserPlus, Save, Users, Trash2, Plus, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ interface Student {
   email: string;
   course: string;
   attendance: number;
+  user_id: string | null;
 }
 
 interface TestMark {
@@ -36,8 +37,10 @@ const AdminStudents = () => {
   const [testMarks, setTestMarks] = useState<TestMark[]>([]);
   const [newTest, setNewTest] = useState({ testName: "", marks: "", total: "" });
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [newStudent, setNewStudent] = useState({ name: "", email: "", course: "" });
+  const [newStudent, setNewStudent] = useState({ name: "", email: "", password: "", course: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [addingStudent, setAddingStudent] = useState(false);
   const { toast } = useToast();
 
   const selected = students.find((s) => s.id === selectedId);
@@ -66,20 +69,34 @@ const AdminStudents = () => {
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newStudent.name || !newStudent.email || !newStudent.course) return;
-    const { error } = await supabase.from("students").insert({
-      name: newStudent.name,
-      email: newStudent.email,
-      course: newStudent.course,
-    });
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Student added successfully" });
-      setNewStudent({ name: "", email: "", course: "" });
-      setShowAddDialog(false);
-      fetchStudents();
+    if (!newStudent.name || !newStudent.email || !newStudent.password || !newStudent.course) return;
+    if (newStudent.password.length < 6) {
+      toast({ title: "Password must be at least 6 characters", variant: "destructive" });
+      return;
     }
+    setAddingStudent(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await supabase.functions.invoke("create-student-account", {
+        body: {
+          email: newStudent.email,
+          password: newStudent.password,
+          name: newStudent.name,
+          course: newStudent.course,
+        },
+      });
+      if (res.error || res.data?.error) {
+        toast({ title: "Error", description: res.data?.error || res.error?.message, variant: "destructive" });
+      } else {
+        toast({ title: "Student account created!", description: `Email: ${newStudent.email}` });
+        setNewStudent({ name: "", email: "", password: "", course: "" });
+        setShowAddDialog(false);
+        fetchStudents();
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+    setAddingStudent(false);
   };
 
   const handleDeleteStudent = async (id: string) => {
@@ -133,8 +150,8 @@ const AdminStudents = () => {
                 <Button variant="ghost" size="icon"><ArrowLeft size={20} /></Button>
               </Link>
               <div>
-                <h1 className="text-3xl font-display text-foreground">Student Dashboard</h1>
-                <p className="text-muted-foreground">Manage attendance and test marks</p>
+                <h1 className="text-3xl font-display text-foreground">Student Management</h1>
+                <p className="text-muted-foreground">Add students with login credentials, manage attendance and marks</p>
               </div>
             </div>
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
@@ -142,21 +159,38 @@ const AdminStudents = () => {
                 <Button><Plus size={16} /> Add Student</Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogHeader><DialogTitle>Add New Student</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>Create Student Account</DialogTitle></DialogHeader>
                 <form onSubmit={handleAddStudent} className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Name</Label>
+                    <Label>Full Name</Label>
                     <Input value={newStudent.name} onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })} placeholder="Student name" required />
                   </div>
                   <div className="space-y-2">
-                    <Label>Email</Label>
+                    <Label>Email (Login ID)</Label>
                     <Input type="email" value={newStudent.email} onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} placeholder="student@email.com" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Password</Label>
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        value={newStudent.password}
+                        onChange={(e) => setNewStudent({ ...newStudent, password: e.target.value })}
+                        placeholder="Min 6 characters"
+                        required
+                      />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Course</Label>
                     <Input value={newStudent.course} onChange={(e) => setNewStudent({ ...newStudent, course: e.target.value })} placeholder="e.g., JEE Advanced" required />
                   </div>
-                  <Button type="submit" className="w-full">Add Student</Button>
+                  <Button type="submit" className="w-full" disabled={addingStudent}>
+                    {addingStudent ? "Creating account..." : "Create Student Account"}
+                  </Button>
                 </form>
               </DialogContent>
             </Dialog>
