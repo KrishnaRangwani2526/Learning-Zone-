@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, FileText, Video, StickyNote, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, FileText, Video, StickyNote, Trash2, Upload, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,7 +29,10 @@ const AdminContent = () => {
   const [content, setContent] = useState<ContentRow[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", type: "pdf", subject: "", course: "" });
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -45,25 +48,59 @@ const AdminContent = () => {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title || !form.subject || !form.course) return;
+
+    setUploading(true);
+    let fileUrl: string | null = null;
+
+    // Upload file if selected
+    if (file) {
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("content-files")
+        .upload(filePath, file);
+
+      if (uploadError) {
+        toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
+        setUploading(false);
+        return;
+      }
+
+      const { data: urlData } = supabase.storage.from("content-files").getPublicUrl(filePath);
+      fileUrl = urlData.publicUrl;
+    }
+
     const { error } = await supabase.from("content").insert({
       title: form.title,
       description: form.description || null,
       type: form.type,
       subject: form.subject,
       course: form.course,
+      file_url: fileUrl,
       created_by: user?.id || null,
     });
+
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Content added successfully" });
       setForm({ title: "", description: "", type: "pdf", subject: "", course: "" });
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       setShowForm(false);
       fetchContent();
     }
+    setUploading(false);
   };
 
   const handleDelete = async (id: string) => {
+    const item = content.find((c) => c.id === id);
+    // Delete file from storage if exists
+    if (item?.file_url) {
+      const path = item.file_url.split("/content-files/")[1];
+      if (path) await supabase.storage.from("content-files").remove([path]);
+    }
     const { error } = await supabase.from("content").delete().eq("id", id);
     if (!error) {
       fetchContent();
@@ -121,8 +158,28 @@ const AdminContent = () => {
                       <Label>Description</Label>
                       <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Brief description" />
                     </div>
+                    <div className="space-y-2 md:col-span-2">
+                      <Label>Upload File</Label>
+                      <div className="flex items-center gap-3">
+                        <Input
+                          ref={fileInputRef}
+                          type="file"
+                          onChange={(e) => setFile(e.target.files?.[0] || null)}
+                          className="flex-1"
+                          accept=".pdf,.doc,.docx,.ppt,.pptx,.mp4,.mp3,.jpg,.png,.txt"
+                        />
+                        {file && (
+                          <Badge variant="secondary" className="shrink-0">
+                            <Upload size={12} className="mr-1" /> {file.name}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Max 20MB. Supported: PDF, DOC, PPT, MP4, images, etc.</p>
+                    </div>
                     <div className="flex items-end gap-2">
-                      <Button type="submit">Save Content</Button>
+                      <Button type="submit" disabled={uploading}>
+                        {uploading ? <><Loader2 size={16} className="animate-spin mr-1" /> Uploading...</> : "Save Content"}
+                      </Button>
                       <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
                     </div>
                   </form>
@@ -147,6 +204,7 @@ const AdminContent = () => {
                           <p className="font-medium text-foreground truncate">{item.title}</p>
                           <p className="text-sm text-muted-foreground truncate">{item.description}</p>
                         </div>
+                        {item.file_url && <Badge variant="default" className="hidden sm:inline-flex text-xs">File ✓</Badge>}
                         <Badge variant="outline" className="hidden sm:inline-flex">{item.course}</Badge>
                         <Badge variant="secondary" className="hidden md:inline-flex">{item.subject}</Badge>
                         <span className="text-xs text-muted-foreground hidden md:block">{item.created_at?.split("T")[0]}</span>
