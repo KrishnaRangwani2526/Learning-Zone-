@@ -32,12 +32,13 @@ const StudentContent = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [contentRes, coursesRes] = await Promise.all([
-        supabase.from("content").select("*").order("created_at", { ascending: false }),
-        supabase.from("courses").select("name"),
-      ]);
-      if (contentRes.data) setContent(contentRes.data);
-      if (coursesRes.data) setCourses(coursesRes.data.map((c) => c.name));
+      const contentRes = await supabase.from("content").select("*").order("created_at", { ascending: false });
+      if (contentRes.data) {
+        setContent(contentRes.data);
+        // Derive courses from actual content data
+        const uniqueCourses = [...new Set(contentRes.data.map((c) => c.course))];
+        setCourses(uniqueCourses);
+      }
       setLoading(false);
     };
     fetchData();
