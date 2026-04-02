@@ -60,17 +60,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    // Set up auth state listener FIRST (but don't await inside callback)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) {
-        const u = await buildUser(session.user);
-        setUser(u);
+        // Use setTimeout to avoid deadlock in onAuthStateChange
+        setTimeout(async () => {
+          const u = await buildUser(session.user);
+          setUser(u);
+          setLoading(false);
+        }, 0);
       } else {
         setUser(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
+    // Then check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
