@@ -90,8 +90,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error: error?.message || null };
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: error.message };
+    // Build user immediately so redirect can happen
+    if (data.user) {
+      const u = await buildUser(data.user);
+      setUser(u);
+      setSession(data.session);
+    }
+    return { error: null };
   };
 
   const signup = async (email: string, password: string, name: string) => {
