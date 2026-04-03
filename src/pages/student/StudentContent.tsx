@@ -2,12 +2,15 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { BookOpen, FileText, Video, StickyNote, ArrowLeft, Search, Download, Eye, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Document, Page, pdfjs } from "react-pdf";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
 
 const typeIcons: Record<string, typeof FileText> = { pdf: FileText, video: Video, notes: StickyNote };
 const typeColors: Record<string, string> = { pdf: "bg-destructive/10 text-destructive", video: "bg-primary/10 text-primary", notes: "bg-secondary/10 text-secondary" };
@@ -38,6 +41,8 @@ const StudentContent = () => {
   const [loading, setLoading] = useState(true);
   const [viewingFile, setViewingFile] = useState<ViewingFile | null>(null);
   const [viewerLoading, setViewerLoading] = useState(false);
+  const [pdfPages, setPdfPages] = useState(0);
+  const [pdfWidth, setPdfWidth] = useState(900);
   const objectUrlsRef = useRef<string[]>([]);
 
   useEffect(() => {
@@ -54,6 +59,17 @@ const StudentContent = () => {
   }, []);
 
   useEffect(() => {
+    const updatePdfWidth = () => {
+      setPdfWidth(Math.min(window.innerWidth - 48, 920));
+    };
+
+    updatePdfWidth();
+    window.addEventListener("resize", updatePdfWidth);
+
+    return () => window.removeEventListener("resize", updatePdfWidth);
+  }, []);
+
+  useEffect(() => {
     return () => {
       objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
 
@@ -65,26 +81,6 @@ const StudentContent = () => {
 
   const handleViewFile = async (item: ContentRow) => {
     if (!item.file_url) return;
-    const previewTab = window.open("", "_blank");
-
-    if (previewTab) {
-      previewTab.document.write(`
-        <!doctype html>
-        <html>
-          <head>
-            <title>Opening ${item.title}</title>
-            <style>
-              body { font-family: system-ui, sans-serif; margin: 0; display: grid; place-items: center; min-height: 100vh; background: #fff; color: #111; }
-            </style>
-          </head>
-          <body>
-            <p>Opening ${item.title}...</p>
-          </body>
-        </html>
-      `);
-      previewTab.document.close();
-    }
-
     setViewerLoading(true);
 
     try {
@@ -97,22 +93,23 @@ const StudentContent = () => {
       const objectUrl = URL.createObjectURL(blob);
       objectUrlsRef.current.push(objectUrl);
 
-      if (previewTab) {
-        previewTab.location.href = objectUrl;
-        return;
-      }
-
       setViewingFile({
         url: objectUrl,
         title: item.title,
         type: item.type,
         isObjectUrl: true,
       });
+      setPdfPages(0);
     } catch {
       await handleDownload(item.file_url, item.title);
     } finally {
       setViewerLoading(false);
     }
+  };
+
+  const closeViewer = () => {
+    setViewingFile(null);
+    setPdfPages(0);
   };
 
   const handleDownload = async (url: string, title: string) => {
@@ -252,14 +249,33 @@ const StudentContent = () => {
               <Button size="sm" variant="outline" onClick={() => handleDownload(viewingFile.url, viewingFile.title)}>
                 <Download size={14} className="mr-1" /> Download
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => setViewingFile(null)}>
+              <Button size="sm" variant="ghost" onClick={closeViewer}>
                 <X size={18} />
               </Button>
             </div>
           </div>
-          <div className="flex-1 p-4">
+          <div className="flex-1 overflow-auto p-4">
             {viewingFile.type === "video" ? (
               <video src={viewingFile.url} controls className="w-full h-full max-h-[calc(100vh-120px)] rounded-lg" />
+            ) : viewingFile.type === "pdf" ? (
+              <div className="mx-auto flex max-w-full flex-col items-center gap-4">
+                <Document
+                  file={viewingFile.url}
+                  loading={<p className="text-sm text-muted-foreground">Loading PDF...</p>}
+                  onLoadSuccess={({ numPages }) => setPdfPages(numPages)}
+                  onLoadError={() => handleDownload(viewingFile.url, viewingFile.title)}
+                >
+                  {Array.from({ length: pdfPages }, (_, index) => (
+                    <Page
+                      key={`page_${index + 1}`}
+                      pageNumber={index + 1}
+                      renderAnnotationLayer={false}
+                      renderTextLayer={false}
+                      width={pdfWidth}
+                    />
+                  ))}
+                </Document>
+              </div>
             ) : (
               <iframe src={viewingFile.url} className="w-full h-full rounded-lg border border-border" title={viewingFile.title} />
             )}
