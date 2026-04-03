@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { BookOpen, FileText, Video, StickyNote, ArrowLeft, Search, Download, Eye, X } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -38,6 +38,7 @@ const StudentContent = () => {
   const [loading, setLoading] = useState(true);
   const [viewingFile, setViewingFile] = useState<ViewingFile | null>(null);
   const [viewerLoading, setViewerLoading] = useState(false);
+  const objectUrlsRef = useRef<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,6 +55,8 @@ const StudentContent = () => {
 
   useEffect(() => {
     return () => {
+      objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+
       if (viewingFile?.isObjectUrl) {
         URL.revokeObjectURL(viewingFile.url);
       }
@@ -62,6 +65,26 @@ const StudentContent = () => {
 
   const handleViewFile = async (item: ContentRow) => {
     if (!item.file_url) return;
+    const previewTab = window.open("", "_blank");
+
+    if (previewTab) {
+      previewTab.document.write(`
+        <!doctype html>
+        <html>
+          <head>
+            <title>Opening ${item.title}</title>
+            <style>
+              body { font-family: system-ui, sans-serif; margin: 0; display: grid; place-items: center; min-height: 100vh; background: #fff; color: #111; }
+            </style>
+          </head>
+          <body>
+            <p>Opening ${item.title}...</p>
+          </body>
+        </html>
+      `);
+      previewTab.document.close();
+    }
+
     setViewerLoading(true);
 
     try {
@@ -72,6 +95,12 @@ const StudentContent = () => {
 
       const blob = await response.blob();
       const objectUrl = URL.createObjectURL(blob);
+      objectUrlsRef.current.push(objectUrl);
+
+      if (previewTab) {
+        previewTab.location.href = objectUrl;
+        return;
+      }
 
       setViewingFile({
         url: objectUrl,
