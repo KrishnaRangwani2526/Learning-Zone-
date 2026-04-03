@@ -23,13 +23,21 @@ interface ContentRow {
   created_at: string;
 }
 
+interface ViewingFile {
+  url: string;
+  title: string;
+  type: string;
+  isObjectUrl: boolean;
+}
+
 const StudentContent = () => {
   const [search, setSearch] = useState("");
   const [filterCourse, setFilterCourse] = useState("All");
   const [content, setContent] = useState<ContentRow[]>([]);
   const [courses, setCourses] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewingFile, setViewingFile] = useState<{ url: string; title: string; type: string } | null>(null);
+  const [viewingFile, setViewingFile] = useState<ViewingFile | null>(null);
+  const [viewerLoading, setViewerLoading] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,9 +52,38 @@ const StudentContent = () => {
     fetchData();
   }, []);
 
-  const handleViewFile = (item: ContentRow) => {
+  useEffect(() => {
+    return () => {
+      if (viewingFile?.isObjectUrl) {
+        URL.revokeObjectURL(viewingFile.url);
+      }
+    };
+  }, [viewingFile]);
+
+  const handleViewFile = async (item: ContentRow) => {
     if (!item.file_url) return;
-    setViewingFile({ url: item.file_url, title: item.title, type: item.type });
+    setViewerLoading(true);
+
+    try {
+      const response = await fetch(item.file_url);
+      if (!response.ok) {
+        throw new Error("Failed to load file");
+      }
+
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+
+      setViewingFile({
+        url: objectUrl,
+        title: item.title,
+        type: item.type,
+        isObjectUrl: true,
+      });
+    } catch {
+      await handleDownload(item.file_url, item.title);
+    } finally {
+      setViewerLoading(false);
+    }
   };
 
   const handleDownload = async (url: string, title: string) => {
@@ -90,7 +127,7 @@ const StudentContent = () => {
               <span className="text-xs text-muted-foreground">{item.created_at?.split("T")[0]}</span>
               {item.file_url && (
                 <div className="flex gap-1">
-                  <Button size="sm" variant="outline" onClick={() => handleViewFile(item)}>
+                  <Button size="sm" variant="outline" onClick={() => void handleViewFile(item)}>
                     <Eye size={14} className="mr-1" /> View
                   </Button>
                   <Button size="sm" variant="ghost" onClick={() => handleDownload(item.file_url!, item.title)}>
@@ -169,6 +206,15 @@ const StudentContent = () => {
       </div>
 
       {/* File Viewer Modal */}
+      {viewerLoading && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+          <div className="text-center space-y-2">
+            <p className="font-display text-lg text-foreground">Opening file...</p>
+            <p className="text-sm text-muted-foreground">Preparing a safe preview inside the app.</p>
+          </div>
+        </div>
+      )}
+
       {viewingFile && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col">
           <div className="flex items-center justify-between p-4 border-b border-border bg-background">
