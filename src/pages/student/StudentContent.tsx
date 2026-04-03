@@ -2,15 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { BookOpen, FileText, Video, StickyNote, ArrowLeft, Search, Download, Eye, X } from "lucide-react";
 import { Link } from "react-router-dom";
-import { Document, Page, pdfjs } from "react-pdf";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
-
-pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
 
 const typeIcons: Record<string, typeof FileText> = { pdf: FileText, video: Video, notes: StickyNote };
 const typeColors: Record<string, string> = { pdf: "bg-destructive/10 text-destructive", video: "bg-primary/10 text-primary", notes: "bg-secondary/10 text-secondary" };
@@ -41,8 +38,6 @@ const StudentContent = () => {
   const [loading, setLoading] = useState(true);
   const [viewingFile, setViewingFile] = useState<ViewingFile | null>(null);
   const [viewerLoading, setViewerLoading] = useState(false);
-  const [pdfPages, setPdfPages] = useState(0);
-  const [pdfWidth, setPdfWidth] = useState(900);
   const objectUrlsRef = useRef<string[]>([]);
 
   useEffect(() => {
@@ -56,17 +51,6 @@ const StudentContent = () => {
       setLoading(false);
     };
     fetchData();
-  }, []);
-
-  useEffect(() => {
-    const updatePdfWidth = () => {
-      setPdfWidth(Math.min(window.innerWidth - 48, 920));
-    };
-
-    updatePdfWidth();
-    window.addEventListener("resize", updatePdfWidth);
-
-    return () => window.removeEventListener("resize", updatePdfWidth);
   }, []);
 
   useEffect(() => {
@@ -99,7 +83,6 @@ const StudentContent = () => {
         type: item.type,
         isObjectUrl: true,
       });
-      setPdfPages(0);
     } catch {
       await handleDownload(item.file_url, item.title);
     } finally {
@@ -109,7 +92,6 @@ const StudentContent = () => {
 
   const closeViewer = () => {
     setViewingFile(null);
-    setPdfPages(0);
   };
 
   const handleDownload = async (url: string, title: string) => {
@@ -254,30 +236,25 @@ const StudentContent = () => {
               </Button>
             </div>
           </div>
-          <div className="flex-1 overflow-auto p-4">
+          <div className="flex-1 overflow-hidden p-4">
             {viewingFile.type === "video" ? (
               <video src={viewingFile.url} controls className="w-full h-full max-h-[calc(100vh-120px)] rounded-lg" />
-            ) : viewingFile.type === "pdf" ? (
-              <div className="mx-auto flex max-w-full flex-col items-center gap-4">
-                <Document
-                  file={viewingFile.url}
-                  loading={<p className="text-sm text-muted-foreground">Loading PDF...</p>}
-                  onLoadSuccess={({ numPages }) => setPdfPages(numPages)}
-                  onLoadError={() => handleDownload(viewingFile.url, viewingFile.title)}
-                >
-                  {Array.from({ length: pdfPages }, (_, index) => (
-                    <Page
-                      key={`page_${index + 1}`}
-                      pageNumber={index + 1}
-                      renderAnnotationLayer={false}
-                      renderTextLayer={false}
-                      width={pdfWidth}
-                    />
-                  ))}
-                </Document>
-              </div>
             ) : (
-              <iframe src={viewingFile.url} className="w-full h-full rounded-lg border border-border" title={viewingFile.title} />
+              <object
+                data={viewingFile.url}
+                type="application/pdf"
+                className="w-full h-full rounded-lg border border-border"
+              >
+                <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
+                  <FileText size={48} className="text-muted-foreground" />
+                  <p className="text-muted-foreground">
+                    Unable to preview this file in the browser.
+                  </p>
+                  <Button onClick={() => handleDownload(viewingFile.url, viewingFile.title)}>
+                    <Download size={16} className="mr-2" /> Download File
+                  </Button>
+                </div>
+              </object>
             )}
           </div>
         </div>
