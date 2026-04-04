@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, FileText, Video, StickyNote, ArrowLeft, Search, Download, Eye, X } from "lucide-react";
+import { BookOpen, FileText, Video, StickyNote, ArrowLeft, Search, Download, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
+import ContentPreviewModal from "@/components/student/ContentPreviewModal";
+import { getFileExtension, getOfficePreviewUrl, getPreviewKind, type PreparedViewingFile } from "@/lib/contentPreview";
 
 const typeIcons: Record<string, typeof FileText> = { pdf: FileText, video: Video, notes: StickyNote };
 const typeColors: Record<string, string> = { pdf: "bg-destructive/10 text-destructive", video: "bg-primary/10 text-primary", notes: "bg-secondary/10 text-secondary" };
@@ -23,20 +25,13 @@ interface ContentRow {
   created_at: string;
 }
 
-interface ViewingFile {
-  url: string;
-  title: string;
-  type: string;
-  isObjectUrl: boolean;
-}
-
 const StudentContent = () => {
   const [search, setSearch] = useState("");
   const [filterCourse, setFilterCourse] = useState("All");
   const [content, setContent] = useState<ContentRow[]>([]);
   const [courses, setCourses] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewingFile, setViewingFile] = useState<ViewingFile | null>(null);
+  const [viewingFile, setViewingFile] = useState<PreparedViewingFile | null>(null);
   const [viewerLoading, setViewerLoading] = useState(false);
   const objectUrlsRef = useRef<string[]>([]);
 
@@ -56,32 +51,92 @@ const StudentContent = () => {
   useEffect(() => {
     return () => {
       objectUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
-
-      if (viewingFile?.isObjectUrl) {
-        URL.revokeObjectURL(viewingFile.url);
-      }
+      objectUrlsRef.current = [];
     };
-  }, [viewingFile]);
+  }, []);
+
+  const releaseObjectUrl = (url: string) => {
+    URL.revokeObjectURL(url);
+    objectUrlsRef.current = objectUrlsRef.current.filter((trackedUrl) => trackedUrl !== url);
+  };
+
+  const releaseViewingFile = (file: PreparedViewingFile | null) => {
+    if (file?.isObjectUrl) {
+      releaseObjectUrl(file.url);
+    }
+  };
 
   const handleViewFile = async (item: ContentRow) => {
     if (!item.file_url) return;
     setViewerLoading(true);
 
     try {
+      const extension = getFileExtension(item.file_url);
+      const initialKind = getPreviewKind(extension, "", item.type);
+
+      releaseViewingFile(viewingFile);
+
+      if (initialKind === "office") {
+        setViewingFile({
+          url: getOfficePreviewUrl(item.file_url, extension),
+          title: item.title,
+          kind: "office",
+          isObjectUrl: false,
+          mimeType: "",
+          downloadUrl: item.file_url,
+          extension,
+        });
+        return;
+      }
+
       const response = await fetch(item.file_url);
       if (!response.ok) {
         throw new Error("Failed to load file");
       }
 
       const blob = await response.blob();
+      const mimeType = blob.type || response.headers.get("content-type") || "";
+      const previewKind = getPreviewKind(extension, mimeType, item.type);
+
+      if (previewKind === "text") {
+        const textContent = await blob.text();
+        setViewingFile({
+          url: "",
+          title: item.title,
+          kind: "text",
+          isObjectUrl: false,
+          mimeType,
+          downloadUrl: item.file_url,
+          extension,
+          textContent,
+        });
+        return;
+      }
+
+      if (previewKind === "unsupported") {
+        setViewingFile({
+          url: "",
+          title: item.title,
+          kind: "unsupported",
+          isObjectUrl: false,
+          mimeType,
+          downloadUrl: item.file_url,
+          extension,
+        });
+        return;
+      }
+
       const objectUrl = URL.createObjectURL(blob);
       objectUrlsRef.current.push(objectUrl);
 
       setViewingFile({
         url: objectUrl,
         title: item.title,
-        type: item.type,
+        kind: previewKind,
         isObjectUrl: true,
+        mimeType,
+        downloadUrl: item.file_url,
+        extension,
       });
     } catch {
       await handleDownload(item.file_url, item.title);
@@ -91,23 +146,27 @@ const StudentContent = () => {
   };
 
   const closeViewer = () => {
+    releaseViewingFile(viewingFile);
     setViewingFile(null);
   };
 
   const handleDownload = async (url: string, title: string) => {
+    const extension = getFileExtension(url);
+    const downloadName = title.includes(".") || !extension ? title : `${title}.${extension}`;
+
     try {
       const response = await fetch(url);
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = blobUrl;
-      a.download = title;
+      a.download = downloadName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(blobUrl);
     } catch {
-      window.open(url, "_blank");
+      window.open(url, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -213,52 +272,12 @@ const StudentContent = () => {
         </motion.div>
       </div>
 
-      {/* File Viewer Modal */}
-      {viewerLoading && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
-          <div className="text-center space-y-2">
-            <p className="font-display text-lg text-foreground">Opening file...</p>
-            <p className="text-sm text-muted-foreground">Preparing a safe preview inside the app.</p>
-          </div>
-        </div>
-      )}
-
-      {viewingFile && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b border-border bg-background">
-            <h3 className="font-display text-lg text-foreground truncate">{viewingFile.title}</h3>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => handleDownload(viewingFile.url, viewingFile.title)}>
-                <Download size={14} className="mr-1" /> Download
-              </Button>
-              <Button size="sm" variant="ghost" onClick={closeViewer}>
-                <X size={18} />
-              </Button>
-            </div>
-          </div>
-          <div className="flex-1 overflow-hidden p-4">
-            {viewingFile.type === "video" ? (
-              <video src={viewingFile.url} controls className="w-full h-full max-h-[calc(100vh-120px)] rounded-lg" />
-            ) : (
-              <object
-                data={viewingFile.url}
-                type="application/pdf"
-                className="w-full h-full rounded-lg border border-border"
-              >
-                <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
-                  <FileText size={48} className="text-muted-foreground" />
-                  <p className="text-muted-foreground">
-                    Unable to preview this file in the browser.
-                  </p>
-                  <Button onClick={() => handleDownload(viewingFile.url, viewingFile.title)}>
-                    <Download size={16} className="mr-2" /> Download File
-                  </Button>
-                </div>
-              </object>
-            )}
-          </div>
-        </div>
-      )}
+      <ContentPreviewModal
+        viewingFile={viewingFile}
+        viewerLoading={viewerLoading}
+        onClose={closeViewer}
+        onDownload={handleDownload}
+      />
     </div>
   );
 };
