@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, RadialBarChart, RadialBar, PolarAngleAxis } from "recharts";
 import Navbar from "@/components/Navbar";
 
 interface StudentRecord {
@@ -109,6 +111,40 @@ const StudentMyDashboard = () => {
                   <div className="p-3 rounded-xl bg-primary/10"><TrendingUp className="text-primary" size={22} /></div>
                   <div><p className="text-sm text-muted-foreground">Course</p><p className="text-2xl font-bold text-foreground">{student.course}</p></div>
                 </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Analytics Graphs */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader><CardTitle>Attendance Overview</CardTitle></CardHeader>
+              <CardContent className="flex items-center justify-center">
+                <ChartContainer config={{ attendance: { label: "Attendance", color: "hsl(var(--primary))" } }} className="h-[250px] w-[250px]">
+                  <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" startAngle={90} endAngle={-270} data={[{ name: "Attendance", value: student.attendance, fill: "hsl(var(--primary))" }]}>
+                    <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+                    <RadialBar background dataKey="value" cornerRadius={10} />
+                    <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-2xl font-bold">{student.attendance}%</text>
+                  </RadialBarChart>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Test Performance</CardTitle></CardHeader>
+              <CardContent>
+                {testMarks.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-6">No test data yet.</p>
+                ) : (
+                  <ChartContainer config={{ percentage: { label: "Score %", color: "hsl(var(--primary))" } }} className="h-[250px]">
+                    <BarChart data={testMarks.map((t) => ({ name: t.test_name, percentage: Number(((t.marks / t.total) * 100).toFixed(1)) }))}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <XAxis dataKey="name" className="text-muted-foreground" tick={{ fontSize: 11 }} />
+                      <YAxis domain={[0, 100]} className="text-muted-foreground" />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="percentage" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                )}
               </CardContent>
             </Card>
           </div>

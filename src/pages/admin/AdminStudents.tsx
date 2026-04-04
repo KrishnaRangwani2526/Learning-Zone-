@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
@@ -41,8 +42,11 @@ const AdminStudents = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [addingStudent, setAddingStudent] = useState(false);
+  const [courseFilter, setCourseFilter] = useState("all");
   const { toast } = useToast();
 
+  const courses = Array.from(new Set(students.map((s) => s.course))).sort();
+  const filteredStudents = courseFilter === "all" ? students : students.filter((s) => s.course === courseFilter);
   const selected = students.find((s) => s.id === selectedId);
 
   const fetchStudents = async () => {
@@ -201,10 +205,21 @@ const AdminStudents = () => {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <Card className="lg:col-span-1">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Users size={18} /> Students ({students.length})</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Users size={18} /> Students ({filteredStudents.length})</CardTitle>
+                  {courses.length > 1 && (
+                    <Select value={courseFilter} onValueChange={setCourseFilter}>
+                      <SelectTrigger className="mt-2"><SelectValue placeholder="Filter by course" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Courses</SelectItem>
+                        {courses.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </CardHeader>
                 <CardContent className="space-y-2">
-                  {students.length === 0 && <p className="text-sm text-muted-foreground">No students yet. Add one!</p>}
-                  {students.map((s) => (
+                  {filteredStudents.length === 0 && <p className="text-sm text-muted-foreground">No students found.</p>}
+                  {filteredStudents.map((s) => (
                     <div key={s.id} className="flex items-center gap-2">
                       <button
                         onClick={() => setSelectedId(s.id)}

@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BookOpen, LayoutDashboard, LogOut } from "lucide-react";
+import { BookOpen, LayoutDashboard, LogOut, IndianRupee } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +25,7 @@ const AdminDashboard = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl">
             <Link to="/admin/content">
               <Card className="group cursor-pointer hover:shadow-lg transition-all hover:border-primary/40 h-full">
                 <CardHeader className="text-center pb-2">
@@ -45,6 +45,17 @@ const AdminDashboard = () => {
                   </div>
                   <CardTitle className="text-xl">Student Dashboard</CardTitle>
                   <CardDescription>Manage attendance and test marks</CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+            <Link to="/admin/fees">
+              <Card className="group cursor-pointer hover:shadow-lg transition-all hover:border-primary/40 h-full">
+                <CardHeader className="text-center pb-2">
+                  <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                    <IndianRupee className="text-primary" size={28} />
+                  </div>
+                  <CardTitle className="text-xl">Fees Management</CardTitle>
+                  <CardDescription>Track fee submissions and analytics</CardDescription>
                 </CardHeader>
               </Card>
             </Link>
