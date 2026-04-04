@@ -48,6 +48,17 @@ const AdminDashboard = () => {
                 </CardHeader>
               </Card>
             </Link>
+            <Link to="/admin/fees">
+              <Card className="group cursor-pointer hover:shadow-lg transition-all hover:border-primary/40 h-full">
+                <CardHeader className="text-center pb-2">
+                  <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+                    <IndianRupee className="text-primary" size={28} />
+                  </div>
+                  <CardTitle className="text-xl">Fees Management</CardTitle>
+                  <CardDescription>Track fee submissions and analytics</CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
           </div>
         </motion.div>
       </div>
