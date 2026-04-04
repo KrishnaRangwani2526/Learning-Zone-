@@ -42,8 +42,11 @@ const AdminStudents = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [addingStudent, setAddingStudent] = useState(false);
+  const [courseFilter, setCourseFilter] = useState("all");
   const { toast } = useToast();
 
+  const courses = Array.from(new Set(students.map((s) => s.course))).sort();
+  const filteredStudents = courseFilter === "all" ? students : students.filter((s) => s.course === courseFilter);
   const selected = students.find((s) => s.id === selectedId);
 
   const fetchStudents = async () => {
