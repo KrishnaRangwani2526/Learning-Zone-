@@ -12,6 +12,7 @@ import StudentMyDashboard from "./pages/student/StudentMyDashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminStudents from "./pages/admin/AdminStudents";
+import AdminFees from "./pages/admin/AdminFees";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
