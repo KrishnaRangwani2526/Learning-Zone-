@@ -74,6 +74,47 @@ export type Database = {
         }
         Relationships: []
       }
+      fees: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          month: string
+          notes: string | null
+          paid_at: string
+          student_id: string
+          year: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          month: string
+          notes?: string | null
+          paid_at?: string
+          student_id: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          month?: string
+          notes?: string | null
+          paid_at?: string
+          student_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fees_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
