@@ -205,10 +205,21 @@ const AdminStudents = () => {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <Card className="lg:col-span-1">
-                <CardHeader><CardTitle className="flex items-center gap-2"><Users size={18} /> Students ({students.length})</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Users size={18} /> Students ({filteredStudents.length})</CardTitle>
+                  {courses.length > 1 && (
+                    <Select value={courseFilter} onValueChange={setCourseFilter}>
+                      <SelectTrigger className="mt-2"><SelectValue placeholder="Filter by course" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Courses</SelectItem>
+                        {courses.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </CardHeader>
                 <CardContent className="space-y-2">
-                  {students.length === 0 && <p className="text-sm text-muted-foreground">No students yet. Add one!</p>}
-                  {students.map((s) => (
+                  {filteredStudents.length === 0 && <p className="text-sm text-muted-foreground">No students found.</p>}
+                  {filteredStudents.map((s) => (
                     <div key={s.id} className="flex items-center gap-2">
                       <button
                         onClick={() => setSelectedId(s.id)}

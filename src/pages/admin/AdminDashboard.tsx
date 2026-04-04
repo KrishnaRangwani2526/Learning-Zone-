@@ -25,7 +25,7 @@ const AdminDashboard = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl">
             <Link to="/admin/content">
               <Card className="group cursor-pointer hover:shadow-lg transition-all hover:border-primary/40 h-full">
                 <CardHeader className="text-center pb-2">
