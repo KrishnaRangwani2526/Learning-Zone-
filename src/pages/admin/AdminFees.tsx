@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, Download, IndianRupee, Users, TrendingUp } from "lucide-react";
+import { ArrowLeft, Plus, Download, IndianRupee, Users, TrendingUp, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ interface FeeRecord {
   year: number;
   paid_at: string;
   notes: string | null;
-  students?: { name: string; course: string; email: string };
+  students?: { name: string; course: string; email: string; parent_contact: string | null };
 }
 
 interface Student {
@@ -31,6 +31,7 @@ interface Student {
   name: string;
   course: string;
   email: string;
+  parent_contact: string | null;
 }
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -42,15 +43,22 @@ const AdminFees = () => {
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [newFee, setNewFee] = useState({ studentId: "", amount: "", month: "", year: String(new Date().getFullYear()), notes: "" });
+  const [feeCourseFilter, setFeeCourseFilter] = useState("all");
+  const [feeMonthFilter, setFeeMonthFilter] = useState("all");
+  // Fee form: course → student flow
+  const [formCourseFilter, setFormCourseFilter] = useState("all");
   const { toast } = useToast();
+
+  const courses = Array.from(new Set(students.map((s) => s.course))).sort();
+  const formFilteredStudents = formCourseFilter === "all" ? students : students.filter((s) => s.course === formCourseFilter);
 
   const fetchData = async () => {
     const [feesRes, studentsRes] = await Promise.all([
-      supabase.from("fees").select("*, students(name, course, email)").order("paid_at", { ascending: false }),
-      supabase.from("students").select("id, name, course, email").order("name"),
+      supabase.from("fees").select("*, students(name, course, email, parent_contact)").order("paid_at", { ascending: false }),
+      supabase.from("students").select("id, name, course, email, parent_contact").order("name"),
     ]);
     if (feesRes.data) setFees(feesRes.data as any);
-    if (studentsRes.data) setStudents(studentsRes.data);
+    if (studentsRes.data) setStudents(studentsRes.data as any);
     setLoading(false);
   };
 
@@ -69,23 +77,41 @@ const AdminFees = () => {
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
+      // Find student to send WhatsApp
+      const student = students.find((s) => s.id === newFee.studentId);
+      const parentContact = student?.parent_contact;
       toast({ title: "Fee record added!" });
       setNewFee({ studentId: "", amount: "", month: "", year: String(new Date().getFullYear()), notes: "" });
+      setFormCourseFilter("all");
       setShowDialog(false);
       fetchData();
+
+      // Open WhatsApp link if parent contact exists
+      if (parentContact) {
+        const msg = encodeURIComponent(
+          `Dear Parent, fee of ₹${newFee.amount} has been received for ${student?.name} for ${newFee.month} ${newFee.year}. Thank you!`
+        );
+        const phone = parentContact.replace(/\D/g, "");
+        window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
+      }
     }
   };
 
-  const totalFees = fees.reduce((s, f) => s + f.amount, 0);
-  const totalStudentsWithFees = new Set(fees.map((f) => f.student_id)).size;
+  // Filter fees for table
+  const filteredFees = fees.filter((f) => {
+    const matchCourse = feeCourseFilter === "all" || f.students?.course === feeCourseFilter;
+    const matchMonth = feeMonthFilter === "all" || f.month === feeMonthFilter;
+    return matchCourse && matchMonth;
+  });
 
-  // Monthly chart data
+  const totalFees = filteredFees.reduce((s, f) => s + f.amount, 0);
+  const totalStudentsWithFees = new Set(filteredFees.map((f) => f.student_id)).size;
+
   const monthlyData = MONTHS.map((m) => ({
     month: m.slice(0, 3),
     amount: fees.filter((f) => f.month === m).reduce((s, f) => s + f.amount, 0),
   }));
 
-  // Course-wise pie data
   const courseMap: Record<string, number> = {};
   fees.forEach((f) => {
     const course = f.students?.course || "Unknown";
@@ -95,7 +121,7 @@ const AdminFees = () => {
 
   const downloadCSV = () => {
     const headers = ["Student Name", "Email", "Course", "Month", "Year", "Amount", "Paid At", "Notes"];
-    const rows = fees.map((f) => [
+    const rows = filteredFees.map((f) => [
       f.students?.name || "", f.students?.email || "", f.students?.course || "",
       f.month, f.year, f.amount, new Date(f.paid_at).toLocaleDateString(), f.notes || "",
     ]);
@@ -130,11 +156,21 @@ const AdminFees = () => {
                   <DialogHeader><DialogTitle>Record Fee Payment</DialogTitle></DialogHeader>
                   <form onSubmit={handleAddFee} className="space-y-4">
                     <div className="space-y-2">
+                      <Label>Filter by Course</Label>
+                      <Select value={formCourseFilter} onValueChange={(v) => { setFormCourseFilter(v); setNewFee({ ...newFee, studentId: "" }); }}>
+                        <SelectTrigger><SelectValue placeholder="All Courses" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Courses</SelectItem>
+                          {courses.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
                       <Label>Student</Label>
                       <Select value={newFee.studentId} onValueChange={(v) => setNewFee({ ...newFee, studentId: v })}>
                         <SelectTrigger><SelectValue placeholder="Select student" /></SelectTrigger>
                         <SelectContent>
-                          {students.map((s) => <SelectItem key={s.id} value={s.id}>{s.name} — {s.course}</SelectItem>)}
+                          {formFilteredStudents.map((s) => <SelectItem key={s.id} value={s.id}>{s.name} — {s.course}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
@@ -159,11 +195,31 @@ const AdminFees = () => {
                       <Label>Notes (optional)</Label>
                       <Input value={newFee.notes} onChange={(e) => setNewFee({ ...newFee, notes: e.target.value })} placeholder="Any remarks" />
                     </div>
-                    <Button type="submit" className="w-full">Record Payment</Button>
+                    <Button type="submit" className="w-full">
+                      <MessageCircle size={16} className="mr-1" /> Record & Notify via WhatsApp
+                    </Button>
                   </form>
                 </DialogContent>
               </Dialog>
             </div>
+          </div>
+
+          {/* Filters */}
+          <div className="flex flex-wrap gap-3">
+            <Select value={feeCourseFilter} onValueChange={setFeeCourseFilter}>
+              <SelectTrigger className="w-48"><SelectValue placeholder="Filter by course" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Courses</SelectItem>
+                {courses.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={feeMonthFilter} onValueChange={setFeeMonthFilter}>
+              <SelectTrigger className="w-48"><SelectValue placeholder="Filter by month" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Months</SelectItem>
+                {MONTHS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Summary Cards */}
@@ -229,8 +285,8 @@ const AdminFees = () => {
           <Card>
             <CardHeader><CardTitle>Fee Records</CardTitle></CardHeader>
             <CardContent>
-              {loading ? <p className="text-center text-muted-foreground py-6">Loading...</p> : fees.length === 0 ? (
-                <p className="text-center text-muted-foreground py-6">No fee records yet.</p>
+              {loading ? <p className="text-center text-muted-foreground py-6">Loading...</p> : filteredFees.length === 0 ? (
+                <p className="text-center text-muted-foreground py-6">No fee records found.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
@@ -245,7 +301,7 @@ const AdminFees = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {fees.map((f) => (
+                      {filteredFees.map((f) => (
                         <TableRow key={f.id}>
                           <TableCell className="font-medium">{f.students?.name || "—"}</TableCell>
                           <TableCell>{f.students?.course || "—"}</TableCell>

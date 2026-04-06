@@ -206,8 +206,11 @@ const AdminContent = () => {
             <p className="text-center text-muted-foreground py-12">Loading content...</p>
           ) : (
             <div className="space-y-3">
-              {content.length === 0 && <p className="text-center text-muted-foreground py-12">No content yet. Add some!</p>}
-              {content.map((item, i) => {
+              {(() => {
+                const filtered = courseFilter === "all" ? content : content.filter((c) => c.course === courseFilter);
+                return filtered.length === 0 ? <p className="text-center text-muted-foreground py-12">No content found.</p> : null;
+              })()}
+              {(courseFilter === "all" ? content : content.filter((c) => c.course === courseFilter)).map((item, i) => {
                 const Icon = typeIcons[item.type] || FileText;
                 return (
                   <motion.div key={item.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}>
