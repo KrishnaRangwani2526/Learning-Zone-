@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { BookOpen, FileText, Video, StickyNote, ArrowLeft, Search, Download, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +27,7 @@ interface ContentRow {
 }
 
 const StudentContent = () => {
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [filterCourse, setFilterCourse] = useState("All");
   const [content, setContent] = useState<ContentRow[]>([]);
@@ -34,9 +36,22 @@ const StudentContent = () => {
   const [viewingFile, setViewingFile] = useState<PreparedViewingFile | null>(null);
   const [viewerLoading, setViewerLoading] = useState(false);
   const objectUrlsRef = useRef<string[]>([]);
+  const [studentCourse, setStudentCourse] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
+      // Get student's course to filter content
+      if (user) {
+        let { data: studentData } = await supabase.from("students").select("course").eq("user_id", user.id).maybeSingle();
+        if (!studentData) {
+          const res = await supabase.from("students").select("course").eq("email", user.email).maybeSingle();
+          studentData = res.data;
+        }
+        if (studentData) {
+          setStudentCourse(studentData.course);
+        }
+      }
+
       const contentRes = await supabase.from("content").select("*").order("created_at", { ascending: false });
       if (contentRes.data) {
         setContent(contentRes.data);
@@ -46,7 +61,7 @@ const StudentContent = () => {
       setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     return () => {
@@ -170,7 +185,9 @@ const StudentContent = () => {
     }
   };
 
-  const filtered = content.filter((c) => {
+  // Filter content: show only student's course content by default
+  const courseFilteredContent = studentCourse ? content.filter((c) => c.course === studentCourse) : content;
+  const filtered = courseFilteredContent.filter((c) => {
     const matchSearch = c.title.toLowerCase().includes(search.toLowerCase()) || (c.description || "").toLowerCase().includes(search.toLowerCase());
     const matchCourse = filterCourse === "All" || c.course === filterCourse;
     return matchSearch && matchCourse;

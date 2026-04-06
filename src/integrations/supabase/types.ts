@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance_records: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          reason: string | null
+          status: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          reason?: string | null
+          status?: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          reason?: string | null
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content: {
         Row: {
           course: string
@@ -165,32 +200,41 @@ export type Database = {
       }
       students: {
         Row: {
+          alt_contact: string | null
           attendance: number
           course: string
           created_at: string
           email: string
           id: string
+          joining_date: string | null
           name: string
+          parent_contact: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
+          alt_contact?: string | null
           attendance?: number
           course: string
           created_at?: string
           email: string
           id?: string
+          joining_date?: string | null
           name: string
+          parent_contact?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
+          alt_contact?: string | null
           attendance?: number
           course?: string
           created_at?: string
           email?: string
           id?: string
+          joining_date?: string | null
           name?: string
+          parent_contact?: string | null
           updated_at?: string
           user_id?: string | null
         }

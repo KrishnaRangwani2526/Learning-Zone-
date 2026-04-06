@@ -29,6 +29,7 @@ const AdminContent = () => {
   const [content, setContent] = useState<ContentRow[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", type: "pdf", subject: "", course: "" });
+  const [courseFilter, setCourseFilter] = useState("all");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -126,6 +127,19 @@ const AdminContent = () => {
             <Button onClick={() => setShowForm(!showForm)}><Plus size={16} /> Add Content</Button>
           </div>
 
+          {/* Course Filter */}
+          {(() => {
+            const uniqueCourses = Array.from(new Set(content.map((c) => c.course))).sort();
+            return uniqueCourses.length > 1 ? (
+              <div className="flex gap-2 flex-wrap">
+                <Button variant={courseFilter === "all" ? "default" : "outline"} size="sm" onClick={() => setCourseFilter("all")}>All</Button>
+                {uniqueCourses.map((c) => (
+                  <Button key={c} variant={courseFilter === c ? "default" : "outline"} size="sm" onClick={() => setCourseFilter(c)}>{c}</Button>
+                ))}
+              </div>
+            ) : null;
+          })()}
+
           {showForm && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
               <Card>
@@ -192,8 +206,11 @@ const AdminContent = () => {
             <p className="text-center text-muted-foreground py-12">Loading content...</p>
           ) : (
             <div className="space-y-3">
-              {content.length === 0 && <p className="text-center text-muted-foreground py-12">No content yet. Add some!</p>}
-              {content.map((item, i) => {
+              {(() => {
+                const filtered = courseFilter === "all" ? content : content.filter((c) => c.course === courseFilter);
+                return filtered.length === 0 ? <p className="text-center text-muted-foreground py-12">No content found.</p> : null;
+              })()}
+              {(courseFilter === "all" ? content : content.filter((c) => c.course === courseFilter)).map((item, i) => {
                 const Icon = typeIcons[item.type] || FileText;
                 return (
                   <motion.div key={item.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}>

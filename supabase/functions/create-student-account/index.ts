@@ -30,7 +30,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Verify the caller is an admin
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -57,7 +56,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, name, course } = await req.json();
+    const { email, password, name, course, joining_date, parent_contact, alt_contact } = await req.json();
     if (!email || !password || !name || !course) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
@@ -80,13 +79,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // The handle_new_user trigger creates profile + student role automatically.
-    // Now create the student record linked to this user.
+    // Create the student record linked to this user
     const { error: studentError } = await adminClient.from("students").insert({
       user_id: newUser.user.id,
       name,
       email,
       course,
+      joining_date: joining_date || new Date().toISOString().split("T")[0],
+      parent_contact: parent_contact || null,
+      alt_contact: alt_contact || null,
     });
 
     if (studentError) {

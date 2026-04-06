@@ -17,6 +17,7 @@ interface StudentRecord {
   name: string;
   course: string;
   attendance: number;
+  joining_date: string | null;
 }
 
 interface TestMark {
@@ -26,30 +27,61 @@ interface TestMark {
   total: number;
 }
 
+interface AttendanceRecord {
+  id: string;
+  date: string;
+  status: string;
+  reason: string | null;
+}
+
 const StudentMyDashboard = () => {
   const { user } = useAuth();
   const [student, setStudent] = useState<StudentRecord | null>(null);
   const [testMarks, setTestMarks] = useState<TestMark[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetch = async () => {
       if (!user) return;
-      // Find student record linked to this user, or by email
       let { data } = await supabase.from("students").select("*").eq("user_id", user.id).maybeSingle();
       if (!data) {
         const res = await supabase.from("students").select("*").eq("email", user.email).maybeSingle();
         data = res.data;
       }
       if (data) {
-        setStudent(data);
-        const { data: marks } = await supabase.from("test_marks").select("*").eq("student_id", data.id).order("created_at");
-        if (marks) setTestMarks(marks);
+        setStudent(data as any);
+        const [marksRes, attRes] = await Promise.all([
+          supabase.from("test_marks").select("*").eq("student_id", data.id).order("created_at"),
+          supabase.from("attendance_records").select("*").eq("student_id", data.id).order("date", { ascending: false }),
+        ]);
+        if (marksRes.data) setTestMarks(marksRes.data);
+        if (attRes.data) setAttendanceRecords(attRes.data);
       }
       setLoading(false);
     };
     fetch();
   }, [user]);
+
+  // Auto-calculate attendance from joining_date
+  const calcAttendance = () => {
+    if (!student?.joining_date) return 0;
+    const start = new Date(student.joining_date);
+    const today = new Date();
+    let totalDays = 0;
+    const d = new Date(start);
+    while (d <= today) {
+      if (d.getDay() !== 0) totalDays++;
+      d.setDate(d.getDate() + 1);
+    }
+    if (totalDays === 0) return 100;
+    const absentDays = attendanceRecords.filter((r) => r.status === "absent").length;
+    const leaveDays = attendanceRecords.filter((r) => r.status === "leave").length;
+    const presentDays = totalDays - absentDays - leaveDays;
+    return Math.max(0, Math.min(100, Math.round((presentDays / totalDays) * 100)));
+  };
+
+  const attendancePercent = calcAttendance();
 
   const avgMarks = testMarks.length > 0
     ? testMarks.reduce((sum, t) => sum + (t.marks / t.total) * 100, 0) / testMarks.length
@@ -91,9 +123,9 @@ const StudentMyDashboard = () => {
               <CardContent className="pt-6">
                 <div className="flex items-center gap-3">
                   <div className="p-3 rounded-xl bg-primary/10"><CalendarCheck className="text-primary" size={22} /></div>
-                  <div><p className="text-sm text-muted-foreground">Attendance</p><p className="text-2xl font-bold text-foreground">{student.attendance}%</p></div>
+                  <div><p className="text-sm text-muted-foreground">Attendance</p><p className="text-2xl font-bold text-foreground">{attendancePercent}%</p></div>
                 </div>
-                <Progress value={student.attendance} className="mt-3" />
+                <Progress value={attendancePercent} className="mt-3" />
               </CardContent>
             </Card>
             <Card>
@@ -121,10 +153,10 @@ const StudentMyDashboard = () => {
               <CardHeader><CardTitle>Attendance Overview</CardTitle></CardHeader>
               <CardContent className="flex items-center justify-center">
                 <ChartContainer config={{ attendance: { label: "Attendance", color: "hsl(var(--primary))" } }} className="h-[250px] w-[250px]">
-                  <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" startAngle={90} endAngle={-270} data={[{ name: "Attendance", value: student.attendance, fill: "hsl(var(--primary))" }]}>
+                  <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" startAngle={90} endAngle={-270} data={[{ name: "Attendance", value: attendancePercent, fill: "hsl(var(--primary))" }]}>
                     <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
                     <RadialBar background dataKey="value" cornerRadius={10} />
-                    <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-2xl font-bold">{student.attendance}%</text>
+                    <text x="50%" y="50%" textAnchor="middle" dominantBaseline="middle" className="fill-foreground text-2xl font-bold">{attendancePercent}%</text>
                   </RadialBarChart>
                 </ChartContainer>
               </CardContent>
@@ -148,6 +180,33 @@ const StudentMyDashboard = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Attendance Records */}
+          {attendanceRecords.length > 0 && (
+            <Card>
+              <CardHeader><CardTitle>Absence & Leave Records</CardTitle></CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Reason</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {attendanceRecords.map((r) => (
+                      <TableRow key={r.id}>
+                        <TableCell>{r.date}</TableCell>
+                        <TableCell className={r.status === "leave" ? "text-secondary" : "text-destructive"}>{r.status === "leave" ? "Leave" : "Absent"}</TableCell>
+                        <TableCell className="text-muted-foreground">{r.reason || "—"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader><CardTitle>Test Marks</CardTitle></CardHeader>
