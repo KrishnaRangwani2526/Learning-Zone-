@@ -27,6 +27,7 @@ interface ContentRow {
 }
 
 const StudentContent = () => {
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [filterCourse, setFilterCourse] = useState("All");
   const [content, setContent] = useState<ContentRow[]>([]);
@@ -35,9 +36,22 @@ const StudentContent = () => {
   const [viewingFile, setViewingFile] = useState<PreparedViewingFile | null>(null);
   const [viewerLoading, setViewerLoading] = useState(false);
   const objectUrlsRef = useRef<string[]>([]);
+  const [studentCourse, setStudentCourse] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
+      // Get student's course to filter content
+      if (user) {
+        let { data: studentData } = await supabase.from("students").select("course").eq("user_id", user.id).maybeSingle();
+        if (!studentData) {
+          const res = await supabase.from("students").select("course").eq("email", user.email).maybeSingle();
+          studentData = res.data;
+        }
+        if (studentData) {
+          setStudentCourse(studentData.course);
+        }
+      }
+
       const contentRes = await supabase.from("content").select("*").order("created_at", { ascending: false });
       if (contentRes.data) {
         setContent(contentRes.data);
@@ -47,7 +61,7 @@ const StudentContent = () => {
       setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     return () => {
