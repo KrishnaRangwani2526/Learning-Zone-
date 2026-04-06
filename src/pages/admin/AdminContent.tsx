@@ -127,6 +127,19 @@ const AdminContent = () => {
             <Button onClick={() => setShowForm(!showForm)}><Plus size={16} /> Add Content</Button>
           </div>
 
+          {/* Course Filter */}
+          {(() => {
+            const uniqueCourses = Array.from(new Set(content.map((c) => c.course))).sort();
+            return uniqueCourses.length > 1 ? (
+              <div className="flex gap-2 flex-wrap">
+                <Button variant={courseFilter === "all" ? "default" : "outline"} size="sm" onClick={() => setCourseFilter("all")}>All</Button>
+                {uniqueCourses.map((c) => (
+                  <Button key={c} variant={courseFilter === c ? "default" : "outline"} size="sm" onClick={() => setCourseFilter(c)}>{c}</Button>
+                ))}
+              </div>
+            ) : null;
+          })()}
+
           {showForm && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
               <Card>
