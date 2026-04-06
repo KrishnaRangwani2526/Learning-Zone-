@@ -29,6 +29,7 @@ const AdminContent = () => {
   const [content, setContent] = useState<ContentRow[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: "", description: "", type: "pdf", subject: "", course: "" });
+  const [courseFilter, setCourseFilter] = useState("all");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
