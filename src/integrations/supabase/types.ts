@@ -246,6 +246,7 @@ export type Database = {
           id: string
           marks: number
           student_id: string
+          test_date: string | null
           test_name: string
           total: number
         }
@@ -254,6 +255,7 @@ export type Database = {
           id?: string
           marks: number
           student_id: string
+          test_date?: string | null
           test_name: string
           total: number
         }
@@ -262,6 +264,7 @@ export type Database = {
           id?: string
           marks?: number
           student_id?: string
+          test_date?: string | null
           test_name?: string
           total?: number
         }
