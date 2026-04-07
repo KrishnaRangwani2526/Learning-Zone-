@@ -155,9 +155,39 @@ const AdminStudents = () => {
   const handleDeleteStudent = async (id: string) => {
     const { error } = await supabase.from("students").delete().eq("id", id);
     if (!error) {
-      if (selectedId === id) setSelectedId(null);
+      if (selectedId === id) { setSelectedId(null); setEditMode(false); }
       fetchStudents();
       toast({ title: "Student removed" });
+    }
+  };
+
+  const startEdit = () => {
+    if (!selected) return;
+    setEditFields({
+      name: selected.name,
+      course: selected.course,
+      joining_date: selected.joining_date || "",
+      parent_contact: selected.parent_contact || "",
+      alt_contact: selected.alt_contact || "",
+    });
+    setEditMode(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedId) return;
+    const { error } = await supabase.from("students").update({
+      name: editFields.name.trim(),
+      course: editFields.course.trim(),
+      joining_date: editFields.joining_date || null,
+      parent_contact: editFields.parent_contact || null,
+      alt_contact: editFields.alt_contact || null,
+    }).eq("id", selectedId);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Student details updated!" });
+      setEditMode(false);
+      fetchStudents();
     }
   };
 
