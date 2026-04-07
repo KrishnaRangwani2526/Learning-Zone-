@@ -48,7 +48,7 @@ const AdminStudents = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [testMarks, setTestMarks] = useState<TestMark[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
-  const [newTest, setNewTest] = useState({ testName: "", marks: "", total: "" });
+  const [newTest, setNewTest] = useState({ testName: "", marks: "", total: "", testDate: new Date().toISOString().split("T")[0] });
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newStudent, setNewStudent] = useState({ name: "", email: "", password: "", course: "", joining_date: new Date().toISOString().split("T")[0], parent_contact: "", alt_contact: "" });
   const [showPassword, setShowPassword] = useState(false);
