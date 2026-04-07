@@ -33,6 +33,7 @@ interface TestMark {
   test_name: string;
   marks: number;
   total: number;
+  test_date: string | null;
 }
 
 interface AttendanceRecord {
@@ -47,7 +48,7 @@ const AdminStudents = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [testMarks, setTestMarks] = useState<TestMark[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
-  const [newTest, setNewTest] = useState({ testName: "", marks: "", total: "" });
+  const [newTest, setNewTest] = useState({ testName: "", marks: "", total: "", testDate: new Date().toISOString().split("T")[0] });
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [newStudent, setNewStudent] = useState({ name: "", email: "", password: "", course: "", joining_date: new Date().toISOString().split("T")[0], parent_contact: "", alt_contact: "" });
   const [showPassword, setShowPassword] = useState(false);
@@ -229,9 +230,10 @@ const AdminStudents = () => {
       test_name: newTest.testName,
       marks: Number(newTest.marks),
       total: Number(newTest.total),
+      test_date: newTest.testDate || null,
     });
     if (!error) {
-      setNewTest({ testName: "", marks: "", total: "" });
+      setNewTest({ testName: "", marks: "", total: "", testDate: new Date().toISOString().split("T")[0] });
       fetchTestMarks(selectedId);
       toast({ title: "Test mark added" });
     }
@@ -458,6 +460,7 @@ const AdminStudents = () => {
                           <TableHeader>
                             <TableRow>
                               <TableHead>Test</TableHead>
+                              <TableHead>Date</TableHead>
                               <TableHead className="text-right">Marks</TableHead>
                               <TableHead className="text-right">Total</TableHead>
                               <TableHead className="text-right">%</TableHead>
@@ -468,6 +471,7 @@ const AdminStudents = () => {
                             {testMarks.map((t) => (
                               <TableRow key={t.id}>
                                 <TableCell className="font-medium">{t.test_name}</TableCell>
+                                <TableCell className="text-muted-foreground text-sm">{t.test_date || "—"}</TableCell>
                                 <TableCell className="text-right">{t.marks}</TableCell>
                                 <TableCell className="text-right">{t.total}</TableCell>
                                 <TableCell className="text-right">{((t.marks / t.total) * 100).toFixed(1)}%</TableCell>
@@ -478,8 +482,9 @@ const AdminStudents = () => {
                             ))}
                           </TableBody>
                         </Table>
-                        <form onSubmit={handleAddTest} className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-border">
+                        <form onSubmit={handleAddTest} className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-border flex-wrap">
                           <Input placeholder="Test name" value={newTest.testName} onChange={(e) => setNewTest({ ...newTest, testName: e.target.value })} required />
+                          <Input type="date" value={newTest.testDate} onChange={(e) => setNewTest({ ...newTest, testDate: e.target.value })} className="w-40" />
                           <Input type="number" placeholder="Marks" value={newTest.marks} onChange={(e) => setNewTest({ ...newTest, marks: e.target.value })} className="w-24" required />
                           <Input type="number" placeholder="Total" value={newTest.total} onChange={(e) => setNewTest({ ...newTest, total: e.target.value })} className="w-24" required />
                           <Button type="submit"><UserPlus size={14} /> Add</Button>

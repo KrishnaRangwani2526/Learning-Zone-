@@ -298,19 +298,40 @@ const AdminFees = () => {
                         <TableHead className="text-right">Amount</TableHead>
                         <TableHead>Paid On</TableHead>
                         <TableHead>Notes</TableHead>
+                        <TableHead className="text-right">Notify</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredFees.map((f) => (
-                        <TableRow key={f.id}>
-                          <TableCell className="font-medium">{f.students?.name || "—"}</TableCell>
-                          <TableCell>{f.students?.course || "—"}</TableCell>
-                          <TableCell>{f.month} {f.year}</TableCell>
-                          <TableCell className="text-right font-medium">₹{f.amount.toLocaleString()}</TableCell>
-                          <TableCell>{new Date(f.paid_at).toLocaleDateString()}</TableCell>
-                          <TableCell className="text-muted-foreground">{f.notes || "—"}</TableCell>
-                        </TableRow>
-                      ))}
+                      {filteredFees.map((f) => {
+                        const parentContact = f.students?.parent_contact;
+                        const sendWhatsApp = () => {
+                          if (!parentContact) return;
+                          const msg = encodeURIComponent(
+                            `Dear Parent, fee of ₹${f.amount} has been received for ${f.students?.name} for ${f.month} ${f.year}. Thank you!`
+                          );
+                          const phone = parentContact.replace(/\D/g, "");
+                          window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
+                        };
+                        return (
+                          <TableRow key={f.id}>
+                            <TableCell className="font-medium">{f.students?.name || "—"}</TableCell>
+                            <TableCell>{f.students?.course || "—"}</TableCell>
+                            <TableCell>{f.month} {f.year}</TableCell>
+                            <TableCell className="text-right font-medium">₹{f.amount.toLocaleString()}</TableCell>
+                            <TableCell>{new Date(f.paid_at).toLocaleDateString()}</TableCell>
+                            <TableCell className="text-muted-foreground">{f.notes || "—"}</TableCell>
+                            <TableCell className="text-right">
+                              {parentContact ? (
+                                <Button variant="ghost" size="icon" onClick={sendWhatsApp} title="Send WhatsApp receipt">
+                                  <MessageCircle size={16} className="text-green-600" />
+                                </Button>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">No contact</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </div>

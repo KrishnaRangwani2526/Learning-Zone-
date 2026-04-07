@@ -1,0 +1,1 @@
+ALTER TABLE public.test_marks ADD COLUMN IF NOT EXISTS test_date date DEFAULT CURRENT_DATE;
