@@ -186,7 +186,7 @@ const StudentContent = () => {
   };
 
   // Filter content: show only student's course content by default
-  const courseFilteredContent = studentCourse ? content.filter((c) => c.course === studentCourse) : content;
+  const courseFilteredContent = studentCourse ? content.filter((c) => c.course.trim().toLowerCase() === studentCourse.trim().toLowerCase()) : content;
   const filtered = courseFilteredContent.filter((c) => {
     const matchSearch = c.title.toLowerCase().includes(search.toLowerCase()) || (c.description || "").toLowerCase().includes(search.toLowerCase());
     const matchCourse = filterCourse === "All" || c.course === filterCourse;
