@@ -63,6 +63,9 @@ const AdminStudents = () => {
   const [leaveStart, setLeaveStart] = useState("");
   const [leaveEnd, setLeaveEnd] = useState("");
   const [leaveReason, setLeaveReason] = useState("");
+  // Edit student
+  const [editMode, setEditMode] = useState(false);
+  const [editFields, setEditFields] = useState({ name: "", course: "", joining_date: "", parent_contact: "", alt_contact: "" });
   const { toast } = useToast();
 
   const courses = Array.from(new Set(students.map((s) => s.course))).sort();
