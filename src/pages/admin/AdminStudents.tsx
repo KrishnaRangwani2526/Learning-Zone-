@@ -390,25 +390,62 @@ const AdminStudents = () => {
                   <>
                     {/* Student Details */}
                     <Card>
-                      <CardHeader><CardTitle>{selected.name} — Details</CardTitle></CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div><p className="text-sm text-muted-foreground">Email</p><p className="font-medium text-foreground">{selected.email}</p></div>
-                          <div><p className="text-sm text-muted-foreground">Course</p><p className="font-medium text-foreground">{selected.course}</p></div>
-                          <div><p className="text-sm text-muted-foreground">Joining Date</p><p className="font-medium text-foreground">{selected.joining_date || "Not set"}</p></div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Parent Contact</p>
-                            <p className="font-medium text-foreground flex items-center gap-1">
-                              {selected.parent_contact ? <><Phone size={12} /> {selected.parent_contact}</> : "Not set"}
-                            </p>
-                          </div>
-                          {selected.alt_contact && (
-                            <div>
-                              <p className="text-sm text-muted-foreground">Alt. Contact</p>
-                              <p className="font-medium text-foreground flex items-center gap-1"><Phone size={12} /> {selected.alt_contact}</p>
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle>{selected.name} — Details</CardTitle>
+                          {!editMode ? (
+                            <Button variant="outline" size="sm" onClick={startEdit}><Save size={14} className="mr-1" /> Edit</Button>
+                          ) : (
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={handleSaveEdit}><Save size={14} className="mr-1" /> Save</Button>
+                              <Button variant="ghost" size="sm" onClick={() => setEditMode(false)}>Cancel</Button>
                             </div>
                           )}
                         </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {editMode ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <Label className="text-sm">Name</Label>
+                              <Input value={editFields.name} onChange={(e) => setEditFields({ ...editFields, name: e.target.value })} />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-sm">Course</Label>
+                              <Input value={editFields.course} onChange={(e) => setEditFields({ ...editFields, course: e.target.value })} />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-sm">Joining Date</Label>
+                              <Input type="date" value={editFields.joining_date} onChange={(e) => setEditFields({ ...editFields, joining_date: e.target.value })} />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-sm">Parent Contact</Label>
+                              <Input type="tel" value={editFields.parent_contact} onChange={(e) => setEditFields({ ...editFields, parent_contact: e.target.value })} placeholder="+91..." />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-sm">Alt. Contact</Label>
+                              <Input type="tel" value={editFields.alt_contact} onChange={(e) => setEditFields({ ...editFields, alt_contact: e.target.value })} placeholder="+91..." />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div><p className="text-sm text-muted-foreground">Email</p><p className="font-medium text-foreground">{selected.email}</p></div>
+                            <div><p className="text-sm text-muted-foreground">Course</p><p className="font-medium text-foreground">{selected.course}</p></div>
+                            <div><p className="text-sm text-muted-foreground">Joining Date</p><p className="font-medium text-foreground">{selected.joining_date || "Not set"}</p></div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">Parent Contact</p>
+                              <p className="font-medium text-foreground flex items-center gap-1">
+                                {selected.parent_contact ? <><Phone size={12} /> {selected.parent_contact}</> : "Not set"}
+                              </p>
+                            </div>
+                            {selected.alt_contact && (
+                              <div>
+                                <p className="text-sm text-muted-foreground">Alt. Contact</p>
+                                <p className="font-medium text-foreground flex items-center gap-1"><Phone size={12} /> {selected.alt_contact}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
 
