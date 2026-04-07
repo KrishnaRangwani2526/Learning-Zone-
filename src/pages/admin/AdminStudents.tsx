@@ -230,9 +230,10 @@ const AdminStudents = () => {
       test_name: newTest.testName,
       marks: Number(newTest.marks),
       total: Number(newTest.total),
+      test_date: newTest.testDate || null,
     });
     if (!error) {
-      setNewTest({ testName: "", marks: "", total: "" });
+      setNewTest({ testName: "", marks: "", total: "", testDate: new Date().toISOString().split("T")[0] });
       fetchTestMarks(selectedId);
       toast({ title: "Test mark added" });
     }
