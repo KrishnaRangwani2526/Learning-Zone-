@@ -33,6 +33,7 @@ interface TestMark {
   test_name: string;
   marks: number;
   total: number;
+  test_date: string | null;
 }
 
 interface AttendanceRecord {
