@@ -8,9 +8,9 @@ const HeroSection = () => {
   const driveUrl = "https://drive.google.com/drive/folders/1rv0dH1BPwcd2XvyklYrJlLY8OD1r07hl";
 
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[50vh] sm:min-h-[60vh] md:min-h-[80vh] lg:min-h-[90vh] flex items-center justify-center overflow-hidden py-20 md:py-0">
       <div className="absolute inset-0">
-        <img src="/home.png" alt="Hero background" className="w-full h-full object-cover" />
+        <img src="/home.png" alt="Hero background" className="w-full h-full object-cover object-center" />
         <div className="absolute inset-0 bg-foreground/60" />
       </div>
 
@@ -18,8 +18,7 @@ const HeroSection = () => {
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-primary-foreground leading-tight max-w-4xl mx-auto"
+          className="font-display text-3xl sm:text-4xl md:text-6xl lg:text-7xl text-primary-foreground leading-tight max-w-4xl mx-auto"
         >
           Welcome to Our <span style={{ fontFamily: "'Trajan Pro', serif", fontWeight: "bold" }}>Learning Zone</span>
         </motion.h1>
@@ -27,8 +26,7 @@ const HeroSection = () => {
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
-          className="mt-6 text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto leading-relaxed"
+          className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto leading-relaxed px-2"
         >
           Empowering students with expert guidance, structured learning, and a
           proven track record of success in competitive examinations.

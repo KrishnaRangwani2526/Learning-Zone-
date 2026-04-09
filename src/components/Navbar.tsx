@@ -50,14 +50,14 @@ const Navbar = () => {
       <div className="container mx-auto flex items-center justify-between h-20 px-4 md:px-8">
         <Link
           to="/"
-          className="group flex items-center gap-3 py-1 px-3 rounded-xl transition-all duration-500 hover:scale-105 hover:-translate-y-1 shadow-md shadow-primary/10 hover:shadow-xl hover:shadow-primary/30 bg-background/60 backdrop-blur-sm border border-primary/10 cursor-pointer"
+          className="group flex items-center gap-2 md:gap-3 py-1 px-2 md:px-3 rounded-xl transition-all duration-500 hover:scale-105 hover:-translate-y-1 shadow-md shadow-primary/10 hover:shadow-xl hover:shadow-primary/30 bg-background/60 backdrop-blur-sm border border-primary/10 cursor-pointer"
         >
           <img 
             src="/logo.png" 
             alt="Learning Zone Logo" 
-            className="w-16 h-16 object-contain transition-transform duration-500 group-hover:rotate-[2deg] drop-shadow-[0_0_8px_hsl(var(--primary)/0.3)] group-hover:drop-shadow-[0_0_15px_hsl(var(--primary)/0.6)]" 
+            className="w-12 h-12 md:w-16 md:h-16 object-contain transition-transform duration-500 group-hover:rotate-[2deg] drop-shadow-[0_0_8px_hsl(var(--primary)/0.3)] group-hover:drop-shadow-[0_0_15px_hsl(var(--primary)/0.6)]" 
           />
-          <span className="font-display text-2xl md:text-3xl text-[#0F2C59] tracking-tight transition-all duration-500 group-hover:text-primary" style={{ fontFamily: "'Trajan Pro', serif", fontWeight: "bold" }}>
+          <span className="font-display text-xl md:text-3xl text-[#0F2C59] tracking-tight transition-all duration-500 group-hover:text-primary" style={{ fontFamily: "'Trajan Pro', serif", fontWeight: "bold" }}>
             Learning Zone
           </span>
         </Link>
@@ -113,7 +113,7 @@ const Navbar = () => {
             transition={{ duration: 0.25 }}
             className="md:hidden overflow-hidden bg-background border-b border-border"
           >
-            <ul className="flex flex-col px-4 pb-4 gap-1">
+            <ul className="flex flex-col px-4 pt-4 pb-4 gap-1">
               {navLinks.map((link) => (
                 <li key={link.label}>
                   {'external' in link && link.external ? (
