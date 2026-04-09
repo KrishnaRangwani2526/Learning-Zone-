@@ -3,26 +3,14 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import heroBg from "@/assets/hero-bg.jpg";
 
 const HeroSection = () => {
-  const [driveUrl, setDriveUrl] = useState("https://drive.google.com");
-
-  useEffect(() => {
-    supabase
-      .from("site_settings")
-      .select("value")
-      .eq("key", "google_drive_url")
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.value) setDriveUrl(data.value);
-      });
-  }, []);
+  const driveUrl = "https://drive.google.com/drive/folders/1rv0dH1BPwcd2XvyklYrJlLY8OD1r07hl";
 
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0">
-        <img src={heroBg} alt="" className="w-full h-full object-cover" />
+        <img src="/home.png" alt="Hero background" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-foreground/60" />
       </div>
 
@@ -33,7 +21,7 @@ const HeroSection = () => {
           transition={{ duration: 0.7 }}
           className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl text-primary-foreground leading-tight max-w-4xl mx-auto"
         >
-          Welcome to Our Coaching Institute
+          Welcome to Our <span style={{ fontFamily: "'Trajan Pro', serif", fontWeight: "bold" }}>Learning Zone</span>
         </motion.h1>
 
         <motion.p

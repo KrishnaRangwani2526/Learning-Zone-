@@ -1,9 +1,8 @@
 import { motion } from "framer-motion";
 
 const faculty = [
-  { name: "Dr. Anil Sharma", subject: "Mathematics", experience: "20+ years" },
-  { name: "Prof. Meera Patel", subject: "Physics", experience: "15+ years" },
-  { name: "Dr. Rajesh Kumar", subject: "Chemistry", experience: "18+ years" },
+  { name: "Manohar Rangwani ", subject: "Mathematics", experience: "25", image: "/manohar.png", linkedin: "https://www.linkedin.com/in/manohar-rangwani-4305a43bb" },
+  { name: "Rekha Rangwani", subject: "Science", experience: "22", image: "/rekha.png", linkedin: "https://www.linkedin.com/in/rekha-rangwani2810" },
 ];
 
 const FacultySection = () => (
@@ -22,23 +21,30 @@ const FacultySection = () => (
         </p>
       </motion.div>
 
-      <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+      <div className="grid md:grid-cols-2 gap-8 max-w-2xl mx-auto">
         {faculty.map((f, i) => (
-          <motion.div
+          <motion.a
+            href={f.linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
             key={f.name}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: i * 0.15 }}
-            className="rounded-xl bg-card border border-border p-6 text-center hover:shadow-lg transition-shadow"
+            className="block rounded-xl bg-card border border-border p-6 text-center hover:shadow-lg hover:-translate-y-1 hover:border-primary/30 transition-all cursor-pointer"
           >
-            <div className="w-20 h-20 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center font-display text-2xl text-muted-foreground">
-              {f.name.charAt(0)}
-            </div>
-            <h3 className="font-display text-lg text-foreground">{f.name}</h3>
+            {f.image ? (
+              <img src={f.image} alt={f.name} className="w-24 h-24 rounded-full mx-auto mb-4 object-cover border-4 border-primary/10" />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center font-display text-2xl text-muted-foreground">
+                {f.name.charAt(0)}
+              </div>
+            )}
+            <h3 className="font-display text-xl text-foreground">{f.name}</h3>
             <p className="text-sm text-primary font-medium mt-1">{f.subject}</p>
-            <p className="text-xs text-muted-foreground mt-1">{f.experience} experience</p>
-          </motion.div>
+            <p className="text-xs text-muted-foreground mt-2">{f.experience} years of experience</p>
+          </motion.a>
         ))}
       </div>
     </div>

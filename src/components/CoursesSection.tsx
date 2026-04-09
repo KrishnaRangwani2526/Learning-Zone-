@@ -3,9 +3,9 @@ import { BookOpen, Beaker, Calculator, Globe } from "lucide-react";
 
 const courses = [
   { icon: Calculator, title: "Mathematics", students: "1,200+" },
-  { icon: Beaker, title: "Physics", students: "980+" },
-  { icon: BookOpen, title: "Chemistry", students: "850+" },
-  { icon: Globe, title: "General Studies", students: "1,500+" },
+  { icon: Beaker, title: "Science", students: "980+" },
+  { icon: Globe, title: "Social Science", students: "850+" },
+  { icon: BookOpen, title: "English", students: "1,500+" },
 ];
 
 const CoursesSection = () => (

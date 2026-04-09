@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
 
 const stats = [
-  { value: "15+", label: "Years of Excellence" },
-  { value: "10,000+", label: "Students Mentored" },
+  { value: "5+", label: "Years of Excellence" },
+  { value: "1000+", label: "Students & Still Counting" },
   { value: "95%", label: "Success Rate" },
   { value: "50+", label: "Expert Faculty" },
 ];

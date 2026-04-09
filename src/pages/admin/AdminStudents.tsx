@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, UserPlus, Save, Users, Trash2, Plus, Eye, EyeOff, CalendarCheck, CalendarOff, Phone } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -48,15 +48,18 @@ const AdminStudents = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [testMarks, setTestMarks] = useState<TestMark[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
-  const [newTest, setNewTest] = useState({ testName: "", marks: "", total: "", testDate: new Date().toISOString().split("T")[0] });
+  const [todayDate, setTodayDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const lastAutoAbsentDate = useRef(todayDate);
+  const lastAutoTestDate = useRef(todayDate);
+  const [newTest, setNewTest] = useState({ testName: "", marks: "", total: "", testDate: todayDate });
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [newStudent, setNewStudent] = useState({ name: "", email: "", password: "", course: "", joining_date: new Date().toISOString().split("T")[0], parent_contact: "", alt_contact: "" });
+  const [newStudent, setNewStudent] = useState({ name: "", email: "", password: "", course: "", joining_date: todayDate, parent_contact: "", alt_contact: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [addingStudent, setAddingStudent] = useState(false);
   const [courseFilter, setCourseFilter] = useState("all");
   // Absent marking
-  const [absentDate, setAbsentDate] = useState(new Date().toISOString().split("T")[0]);
+  const [absentDate, setAbsentDate] = useState(todayDate);
   const [absentReason, setAbsentReason] = useState("");
   // Leave of absence
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
@@ -90,6 +93,24 @@ const AdminStudents = () => {
   };
 
   useEffect(() => { fetchStudents(); }, []);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setTodayDate(new Date().toISOString().split("T")[0]);
+    }, 60 * 1000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
+    setAbsentDate((prev) => (prev === lastAutoAbsentDate.current ? todayDate : prev));
+    setNewTest((prev) => ({
+      ...prev,
+      testDate: prev.testDate === lastAutoTestDate.current ? todayDate : prev.testDate,
+    }));
+    lastAutoAbsentDate.current = todayDate;
+    lastAutoTestDate.current = todayDate;
+  }, [todayDate]);
 
   useEffect(() => {
     if (selectedId) {
@@ -320,7 +341,14 @@ const AdminStudents = () => {
                   </div>
                   <div className="space-y-2">
                     <Label>Course</Label>
-                    <Input value={newStudent.course} onChange={(e) => setNewStudent({ ...newStudent, course: e.target.value })} placeholder="e.g., JEE Advanced" required />
+                    <Input
+                      list="course-options"
+                      value={newStudent.course}
+                      onChange={(e) => setNewStudent({ ...newStudent, course: e.target.value })}
+                      placeholder="Select an existing course or type a new one"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">Choose an existing course or type a new one to add it.</p>
                   </div>
                   <div className="space-y-2">
                     <Label>Joining Date</Label>
@@ -342,6 +370,11 @@ const AdminStudents = () => {
                 </form>
               </DialogContent>
             </Dialog>
+            <datalist id="course-options">
+              {courses.map((course) => (
+                <option key={course} value={course} />
+              ))}
+            </datalist>
           </div>
 
           {loading ? (
@@ -412,7 +445,11 @@ const AdminStudents = () => {
                             </div>
                             <div className="space-y-1">
                               <Label className="text-sm">Course</Label>
-                              <Input value={editFields.course} onChange={(e) => setEditFields({ ...editFields, course: e.target.value })} />
+                              <Input
+                                list="course-options"
+                                value={editFields.course}
+                                onChange={(e) => setEditFields({ ...editFields, course: e.target.value })}
+                              />
                             </div>
                             <div className="space-y-1">
                               <Label className="text-sm">Joining Date</Label>
@@ -483,7 +520,7 @@ const AdminStudents = () => {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <Progress value={attendancePercent} className="h-2" />
-                        <p className="text-xs text-muted-foreground">Students are present by default. Only mark absences below.</p>
+                        <p className="text-xs text-muted-foreground">Students are present by default. Attendance is calculated daily through {todayDate}. Only mark absences below.</p>
                         <div className="flex flex-col sm:flex-row gap-3">
                           <Input type="date" value={absentDate} onChange={(e) => setAbsentDate(e.target.value)} className="w-auto" />
                           <Input value={absentReason} onChange={(e) => setAbsentReason(e.target.value)} placeholder="Reason (optional)" className="flex-1" />
