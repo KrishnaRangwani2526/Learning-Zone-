@@ -12,29 +12,29 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const getNavLinks = () => {
-    const contactLink = { label: "Contact", to: "https://wa.me/919928452506?text=Hello,%20I%20have%20a%20query%20about%20the%20courses", external: true };
+    const contactLink = { label: "Contact", to: "https://wa.me/919928452506?text=Hello,%20I%20have%20a%20query%20about%20the%20courses", external: true, icon: MessageCircle };
     if (!isAuthenticated) {
       return [
-        { label: "Home", to: "/" },
+        { label: "Home", to: "/", icon: Home },
         contactLink,
-        { label: "Login", to: "/login" },
+        { label: "Login", to: "/login", icon: LogIn },
       ];
     }
     if (user?.role === "admin") {
       return [
-        { label: "Home", to: "/" },
+        { label: "Home", to: "/", icon: Home },
         contactLink,
-        { label: "Dashboard", to: "/admin/dashboard" },
-        { label: "Content", to: "/admin/content" },
-        { label: "Students", to: "/admin/students" },
+        { label: "Dashboard", to: "/admin/dashboard", icon: LayoutDashboard },
+        { label: "Content", to: "/admin/content", icon: BookOpen },
+        { label: "Students", to: "/admin/students", icon: Users },
       ];
     }
     return [
-      { label: "Home", to: "/" },
+      { label: "Home", to: "/", icon: Home },
       contactLink,
-      { label: "Dashboard", to: "/student/dashboard" },
-      { label: "Content", to: "/student/content" },
-      { label: "My Progress", to: "/student/my-dashboard" },
+      { label: "Dashboard", to: "/student/dashboard", icon: LayoutDashboard },
+      { label: "Content", to: "/student/content", icon: BookOpen },
+      { label: "My Progress", to: "/student/my-dashboard", icon: TrendingUp },
     ];
   };
 
