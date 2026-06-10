@@ -117,7 +117,9 @@ const Navbar = () => {
             className="md:hidden overflow-hidden bg-background border-b border-border"
           >
             <ul className="flex flex-col px-4 pt-4 pb-4 gap-1">
-              {navLinks.map((link) => (
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                return (
                 <li key={link.label}>
                   {'external' in link && link.external ? (
                     <a
@@ -125,25 +127,28 @@ const Navbar = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setOpen(false)}
-                      className="block px-4 py-3 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-muted"
+                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-muted"
                     >
+                      {Icon && <Icon size={16} />}
                       {link.label}
                     </a>
                   ) : (
                     <Link
                       to={link.to}
                       onClick={() => setOpen(false)}
-                      className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                      className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                         location.pathname === link.to
                           ? "text-primary bg-primary/10"
                           : "text-muted-foreground hover:text-foreground hover:bg-muted"
                       }`}
                     >
+                      {Icon && <Icon size={16} />}
                       {link.label}
                     </Link>
                   )}
                 </li>
-              ))}
+                );
+              })}
               {isAuthenticated && (
                 <li>
                   <button
