@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut, Home, MessageCircle, LogIn, LayoutDashboard, BookOpen, Users, TrendingUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -12,29 +12,29 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const getNavLinks = () => {
-    const contactLink = { label: "Contact", to: "https://wa.me/919928452506?text=Hello,%20I%20have%20a%20query%20about%20the%20courses", external: true };
+    const contactLink = { label: "Contact", to: "https://wa.me/919928452506?text=Hello,%20I%20have%20a%20query%20about%20the%20courses", external: true, icon: MessageCircle };
     if (!isAuthenticated) {
       return [
-        { label: "Home", to: "/" },
+        { label: "Home", to: "/", icon: Home },
         contactLink,
-        { label: "Login", to: "/login" },
+        { label: "Login", to: "/login", icon: LogIn },
       ];
     }
     if (user?.role === "admin") {
       return [
-        { label: "Home", to: "/" },
+        { label: "Home", to: "/", icon: Home },
         contactLink,
-        { label: "Dashboard", to: "/admin/dashboard" },
-        { label: "Content", to: "/admin/content" },
-        { label: "Students", to: "/admin/students" },
+        { label: "Dashboard", to: "/admin/dashboard", icon: LayoutDashboard },
+        { label: "Content", to: "/admin/content", icon: BookOpen },
+        { label: "Students", to: "/admin/students", icon: Users },
       ];
     }
     return [
-      { label: "Home", to: "/" },
+      { label: "Home", to: "/", icon: Home },
       contactLink,
-      { label: "Dashboard", to: "/student/dashboard" },
-      { label: "Content", to: "/student/content" },
-      { label: "My Progress", to: "/student/my-dashboard" },
+      { label: "Dashboard", to: "/student/dashboard", icon: LayoutDashboard },
+      { label: "Content", to: "/student/content", icon: BookOpen },
+      { label: "My Progress", to: "/student/my-dashboard", icon: TrendingUp },
     ];
   };
 
@@ -63,31 +63,34 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden md:flex items-center gap-1">
-          {navLinks.map((link) => (
-            'external' in link && link.external ? (
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            return 'external' in link && link.external ? (
               <a
                 key={link.label}
                 href={link.to}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-muted"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-muted"
               >
+                {Icon && <Icon size={16} />}
                 {link.label}
               </a>
             ) : (
               <Link
                 key={link.label}
                 to={link.to}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   location.pathname === link.to
                     ? "text-primary bg-primary/10"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
+                {Icon && <Icon size={16} />}
                 {link.label}
               </Link>
-            )
-          ))}
+            );
+          })}
           {isAuthenticated && (
             <Button variant="ghost" size="sm" onClick={handleLogout} className="ml-2 text-muted-foreground">
               <LogOut size={16} /> Logout
@@ -114,7 +117,9 @@ const Navbar = () => {
             className="md:hidden overflow-hidden bg-background border-b border-border"
           >
             <ul className="flex flex-col px-4 pt-4 pb-4 gap-1">
-              {navLinks.map((link) => (
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                return (
                 <li key={link.label}>
                   {'external' in link && link.external ? (
                     <a
@@ -122,25 +127,28 @@ const Navbar = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => setOpen(false)}
-                      className="block px-4 py-3 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-muted"
+                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-muted"
                     >
+                      {Icon && <Icon size={16} />}
                       {link.label}
                     </a>
                   ) : (
                     <Link
                       to={link.to}
                       onClick={() => setOpen(false)}
-                      className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                      className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                         location.pathname === link.to
                           ? "text-primary bg-primary/10"
                           : "text-muted-foreground hover:text-foreground hover:bg-muted"
                       }`}
                     >
+                      {Icon && <Icon size={16} />}
                       {link.label}
                     </Link>
                   )}
                 </li>
-              ))}
+                );
+              })}
               {isAuthenticated && (
                 <li>
                   <button
