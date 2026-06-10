@@ -63,31 +63,34 @@ const Navbar = () => {
         </Link>
 
         <div className="hidden md:flex items-center gap-1">
-          {navLinks.map((link) => (
-            'external' in link && link.external ? (
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            return 'external' in link && link.external ? (
               <a
                 key={link.label}
                 href={link.to}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-muted"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-muted"
               >
+                {Icon && <Icon size={16} />}
                 {link.label}
               </a>
             ) : (
               <Link
                 key={link.label}
                 to={link.to}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   location.pathname === link.to
                     ? "text-primary bg-primary/10"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
+                {Icon && <Icon size={16} />}
                 {link.label}
               </Link>
-            )
-          ))}
+            );
+          })}
           {isAuthenticated && (
             <Button variant="ghost" size="sm" onClick={handleLogout} className="ml-2 text-muted-foreground">
               <LogOut size={16} /> Logout
